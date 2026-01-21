@@ -10,6 +10,7 @@ services:
       - db
     networks:
       - default
+      - proxy
 
   nginx:
     image: nginx:alpine
@@ -26,6 +27,7 @@ services:
       - proxy
     labels:
       - traefik.enable=true
+      - traefik.docker.network=proxy
       - traefik.http.routers.laravel.rule=Host(`api-eshop-dashboard.dev.localhost`)
       - traefik.http.routers.laravel.entrypoints=websecure
       - traefik.http.routers.laravel.tls=true
