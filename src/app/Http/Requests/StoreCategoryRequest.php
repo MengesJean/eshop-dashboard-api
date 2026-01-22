@@ -2,18 +2,18 @@
 
 namespace App\Http\Requests;
 
-use App\Models\Product;
+use App\Models\Category;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Str;
 
-class StoreProductRequest extends FormRequest
+class StoreCategoryRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
      */
     public function authorize(): bool
     {
-        return $this->user()?->can('create', Product::class) ?? false;
+        return $this->user()?->can('create', Category::class) ?? false;
     }
 
     protected function prepareForValidation(): void
@@ -24,7 +24,6 @@ class StoreProductRequest extends FormRequest
             ]);
         }
     }
-
     /**
      * Get the validation rules that apply to the request.
      *
@@ -33,16 +32,12 @@ class StoreProductRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['required', 'string', 'max:255'],
-            'slug' => ['required', 'string', 'max:255', 'unique:products,slug'],
-            'sku' => ['required', 'string', 'max:64', 'unique:products,sku'],
-            'description' => ['nullable', 'string'],
-            'short_description' => ['nullable', 'string', 'max:500'],
-            'price' => ['required', 'numeric', 'min:0', 'max:500'],
-            'weight' => ['required', 'numeric', 'min:0', 'max:100'],
-            'stock' => ['required', 'numeric', 'min:0', 'max:500'],
+            'name' => ['required','string','max:255'],
+            'slug' => ['nullable','string','max:255'],
+            'description' => ['nullable','string'],
             'active' => ['required', 'boolean'],
-
+            'parent_id' => ['nullable', 'integer', 'exists:categories,id'],
+            'level' => ['required','integer','between:1,100'],
         ];
     }
 }
