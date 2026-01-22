@@ -23,8 +23,8 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         // Admin = passe partout (évite de passer dans les conditions "if")
-        Gate::before(fn ($user, $ability): bool =>
-             $user->role === UserRole::Admin ? true : null
+        Gate::before(fn ($user, $ability): bool|null =>
+            $user->role === UserRole::Admin ? true : null
         );
 
         // Qui a le droit d'obtenir un token/backoffice login

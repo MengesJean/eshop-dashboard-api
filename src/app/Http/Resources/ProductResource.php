@@ -14,19 +14,15 @@ class ProductResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        /**
-         * $user = $request->user();
-         * $isRestricted = $user?->can('access-restricted-dashboard') ?? false;
-         *
-         * return [
-         * 'price' => !$isRestricted ? $this->price : null
-         *]
-         */
+
+        $user = $request->user();
+        $isRestricted = $user?->can('access-restricted-dashboard');
+
         return [
             'id' => $this->id,
             'name' => $this->name,
             'slug' => $this->slug,
-            'price' => (float) $this->price,   // ou string si tu préfères
+            'price' => !$isRestricted ? (float) $this->price : null,
             'sku' => $this->sku,
             'short_description' => $this->short_description,
             'description' => $this->description,
