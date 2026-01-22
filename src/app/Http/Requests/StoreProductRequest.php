@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Str;
 
 class StoreProductRequest extends FormRequest
 {
@@ -11,7 +12,16 @@ class StoreProductRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return $this->user()?->can('create', \App\Models\Product::class) ?? false;
+    }
+
+    protected function prepareForValidation(): void
+    {
+        if(!$this->filled('slug') && $this->filled('name')) {
+            $this->merge([
+                'slug' => Str::slug($this->input('name')),
+            ]);
+        }
     }
 
     /**
@@ -22,7 +32,16 @@ class StoreProductRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //
+            'name' => ['required', 'string', 'max:255'],
+            'slug' => ['required', 'string', 'max:255', 'unique:products,slug'],
+            'sku' => ['required', 'string', 'max:64', 'unique:products,sku'],
+            'description' => ['nullable', 'string'],
+            'short_description' => ['nullable', 'string', 'max:500'],
+            'price' => ['required', 'numeric', 'min:0', 'max:500'],
+            'weight' => ['required', 'numeric', 'min:0', 'max:100'],
+            'stock' => ['required', 'numeric', 'min:0', 'max:500'],
+            'active' => ['required', 'boolean'],
+
         ];
     }
 }

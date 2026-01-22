@@ -46,6 +46,12 @@ class ProductController extends Controller
     {
         $this->authorize('create', Product::class);
 
+        $product = Product::query()->create($request->validated());
+
+        return (new ProductResource($product))
+            ->response()
+            ->setStatusCode(201);
+
     }
 
     /**
@@ -71,6 +77,8 @@ class ProductController extends Controller
     public function update(UpdateProductRequest $request, Product $product)
     {
         $this->authorize('update', Product::class);
+        $product->update($request->validated());
+        return (new ProductResource($product->fresh()));
     }
 
     /**
@@ -79,5 +87,9 @@ class ProductController extends Controller
     public function destroy(Product $product)
     {
         $this->authorize('delete', Product::class);
+
+        $product->delete();
+
+        return response()->json(['message' => 'Produit supprimé.']);
     }
 }

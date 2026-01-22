@@ -2,27 +2,67 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Product;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class UpdateProductRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
     public function authorize(): bool
     {
-        return false;
+        /** @var Product $product */
+        $product = $this->route('product');
+
+        return $this->user()?->can('update', $product) ?? false;
     }
 
-    /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
-     */
+    protected function prepareForValidation(): void
+    {
+        if ($this->has('slug') && $this->filled('name') && $this->input('slug') === '') {
+            $this->merge([
+                'slug' => Str::slug($this->input('name')),
+            ]);
+        }
+
+        // Si tu veux auto-générer slug quand slug est absent mais name présent :
+        if (! $this->has('slug') && $this->filled('name')) {
+            $this->merge([
+                'slug' => Str::slug($this->input('name')),
+            ]);
+        }
+    }
+
     public function rules(): array
     {
+        /** @var Product $product */
+        $product = $this->route('product');
+
         return [
-            //
+            'name' => ['sometimes', 'required', 'string', 'max:255'],
+            'slug' => [
+                'sometimes',
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('products', 'slug')->ignore($product->id),
+            ],
+            'sku' => [
+                'sometimes',
+                'required',
+                'string',
+                'max:64',
+                Rule::unique('products', 'sku')->ignore($product->id),
+            ],
+
+            'price' => ['sometimes', 'required', 'numeric', 'min:0', 'max:500'],
+            'weight' => ['sometimes', 'nullable', 'numeric', 'min:0', 'max:100'],
+
+            'short_description' => ['sometimes', 'nullable', 'string', 'max:500'],
+            'description' => ['sometimes', 'nullable', 'string'],
+
+            'stock' => ['sometimes', 'required', 'integer', 'min:0', 'max:500'],
+            'active' => ['sometimes', 'required', 'boolean'],
         ];
     }
 }
