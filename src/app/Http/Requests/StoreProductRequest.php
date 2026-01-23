@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Category;
 use App\Models\Product;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Str;
@@ -35,6 +36,17 @@ class StoreProductRequest extends FormRequest
         return [
             'name' => ['required', 'string', 'max:255'],
             'slug' => ['required', 'string', 'max:255', 'unique:products,slug'],
+            'category_ids' => ['sometimes', 'array'],
+            'category_ids.*' => [
+                'integer',
+                'exists:categories,id',
+                function ($attribute, $value, $fail) {
+                    $hasChildren = Category::query()->where('parent_id', $value)->exists();
+                    if ($hasChildren) {
+                        $fail("La catégorie {$value} n'est pas une feuille (elle a des sous-catégories).");
+                    }
+                },
+            ],
             'sku' => ['required', 'string', 'max:64', 'unique:products,sku'],
             'description' => ['nullable', 'string'],
             'short_description' => ['nullable', 'string', 'max:500'],
