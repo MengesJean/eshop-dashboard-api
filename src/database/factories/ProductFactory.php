@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Models\Category;
 use App\Models\Product;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
@@ -35,5 +36,26 @@ class ProductFactory extends Factory
             'stock' => $this->faker->numberBetween(0, 500),
             'active' => $this->faker->boolean(70),
         ];
+    }
+
+    public function configure(): static
+    {
+        return $this->afterCreating(function (Product $product) {
+            $count = $this->faker->numberBetween(0, 2);
+            $leafIds = Category::query()
+                ->whereNotExists(function($q) {
+                    $q->selectRaw('1')
+                        ->from('categories as c2')
+                        ->whereColumn('c2.parent_id', 'categories.id');
+                })
+                ->inRandomOrder()
+                ->limit($count)
+                ->pluck('id')
+                ->all();
+
+            if(!empty($leafIds)) {
+                $product->categories()->sync($leafIds);
+            }
+        });
     }
 }

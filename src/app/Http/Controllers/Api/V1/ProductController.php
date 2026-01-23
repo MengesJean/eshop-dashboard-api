@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreProductRequest;
 use App\Http\Requests\UpdateProductRequest;
 use App\Http\Resources\ProductResource;
+use App\Models\Category;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\ResourceCollection;
@@ -22,10 +23,17 @@ class ProductController extends Controller
         $perPage = $request->query('per_page', 20);
         $perPage = max(1, min($perPage, 100));
 
-        $products = Product::query()
-            ->orderByDesc('created_at')
-            ->paginate($perPage)
-            ->withQueryString();
+        $q = Product::query()
+            ->with(['categories.parent']);
+
+        if($categoryId = $request->query('category_id')) {
+            $ids = Category::descendantIdsAndSelf($categoryId);
+            $q->whereHas('categories', function ($sub) use ($ids) {
+                $sub->whereIn('categories.id', $ids);
+            })->distinct();
+        }
+
+        $products = $q->latest()->paginate($perPage)->withQueryString();
 
         return ProductResource::collection($products);
     }
@@ -46,9 +54,15 @@ class ProductController extends Controller
     {
         $this->authorize('create', Product::class);
 
-        $product = Product::query()->create($request->validated());
+        $data = $request->validated();
+        $categoryIds = $data['category_ids'] ?? [];
+        unset($data['category_ids']);
 
-        return (new ProductResource($product))
+        $product = Product::query()->create($data);
+        if (!empty($categoryIds)) {
+            $product->categories()->sync($categoryIds);
+        }
+        return (new ProductResource($product->load(['categories.parent'])))
             ->response()
             ->setStatusCode(201);
 
@@ -77,8 +91,19 @@ class ProductController extends Controller
     public function update(UpdateProductRequest $request, Product $product)
     {
         $this->authorize('update', Product::class);
-        $product->update($request->validated());
-        return (new ProductResource($product->fresh()));
+
+        $data = $request->validated();
+
+        if (array_key_exists('category_ids', $data)) {
+            $categoryIds = $data['category_ids'] ?? [];
+            unset($data['category_ids']);
+
+            $product->categories()->sync($categoryIds);
+        }
+
+        $product->update($data);
+
+        return new ProductResource($product->fresh()->load(['categories.parent']));
     }
 
     /**

@@ -17,8 +17,9 @@ class CategorySeeder extends Seeder
             'parent_id' => null,
         ]);
 
-        Category::factory()->count(20)->create([
-            'parent_id' => $roots->random()->id,
-        ]);
+        Category::factory()
+            ->count(20)
+            ->state(fn () => ['parent_id' => $roots->random()->id])
+            ->create();
     }
 }

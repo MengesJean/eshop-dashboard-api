@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Category;
 use App\Models\Product;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Str;
@@ -53,6 +54,18 @@ class UpdateProductRequest extends FormRequest
                 'string',
                 'max:64',
                 Rule::unique('products', 'sku')->ignore($product->id),
+            ],
+
+            'category_ids' => ['sometimes', 'array'],
+            'category_ids.*' => [
+                'integer',
+                'exists:categories,id',
+                function ($attribute, $value, $fail) {
+                    $hasChildren = Category::query()->where('parent_id', $value)->exists();
+                    if ($hasChildren) {
+                        $fail("La catégorie {$value} n'est pas une feuille (elle a des sous-catégories).");
+                    }
+                },
             ],
 
             'price' => ['sometimes', 'required', 'numeric', 'min:0', 'max:500'],
