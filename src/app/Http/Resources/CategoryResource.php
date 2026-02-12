@@ -18,6 +18,11 @@ class CategoryResource extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
             'slug' => $this->slug,
+            'parent' => $this->whenLoaded('parent', fn () => [
+                'id' => $this->parent->id,
+                'name' => $this->parent->name,
+                'slug' => $this->parent->slug,
+            ]),
             'description' => $this->description,
             'parent_id' => $this->parent_id,
             'active' => $this->active,

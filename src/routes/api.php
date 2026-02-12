@@ -12,6 +12,9 @@ Route::prefix('v1')->group(function () {
         Route::get('auth/me', [AuthController::class, 'me']);
         Route::post('auth/logout', [AuthController::class, 'logout']);
 
+        Route::get('categories/tree', [CategoryController::class, 'tree']);
+        Route::get('categories/{category}/products', [CategoryController::class, 'products']);
+
         // Ici les routes qui doivent avoir l'authorisation ADMIN
         Route::middleware('can:access-dashboard')->group(function () {
             Route::apiResource('products', ProductController::class);
